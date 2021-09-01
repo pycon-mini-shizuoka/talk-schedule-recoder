@@ -5,6 +5,7 @@
 # requestsでやる
 
 import os
+import json
 import requests
 
 import dotenv
@@ -33,50 +34,56 @@ pprint(meetings)
 
 create_meeting_json_template = """
 {
-  "topic": "test meeting:ミーティングのタイトルかな？",
-  "type": " 2",
-  "start_time": "2021-08-20T10:00:00Z",
-  "duration": "integer",
-  "schedule_for": "string",
-  "timezone": "string",
-  "password": "string",
-  "agenda": "string",
-  "recurrence": {
-    "type": "integer",
-    "repeat_interval": "integer",
-    "weekly_days": "string",
-    "monthly_day": "integer",
-    "monthly_week": "integer",
-    "monthly_week_day": "integer",
-    "end_times": "integer",
-    "end_date_time": "string [date-time]"
-  },
+  "topic": "wip:apitest:",
+  "type": "2",
+  "start_time": "2021-09-10T10:00:00Z",
+  "duration": "40",
+  "timezone": "Asia/Tokyo",
+  "agenda": "",
   "settings": {
-    "host_video": "boolean",
-    "participant_video": "boolean",
-    "cn_meeting": "boolean",
-    "in_meeting": "boolean",
-    "join_before_host": "boolean",
+    "host_video": "true",
+    "participant_video": "true",
+    "join_before_host": "true",
     "mute_upon_entry": "boolean",
-    "watermark": "boolean",
-    "use_pmi": "boolean",
-    "approval_type": "integer",
-    "registration_type": "integer",
-    "audio": "string",
-    "auto_recording": "string",
-    "enforce_login": "boolean",
-    "enforce_login_domains": "string",
-    "alternative_hosts": "string",
-    "global_dial_in_countries": [
-      "string"
-    ],
-    "registrants_email_notification": "boolean"
+    "watermark": "false",
+    "audio": "voip",
+    "auto_recording": "local",
+    "enforce_login": "false"
   }
 }
-
 """
 
-res_add_meeting = requests.post(API_ROOT + f"/v2/users/{userid}/meetings" , headers=headers)
+create_meeting_json_template = """
+{
+  "topic": "wip:apitest:日本語テストです",
+  "type": "2",
+  "start_time": "2021-09-10T10:00:00Z",
+  "duration": "45",
+  "timezone": "Asia/Tokyo",
+  "agenda": "",
+  "settings": {
+    "host_video": "true",
+    "participant_video": "true",
+    "join_before_host": "true",
+    "watermark": "false",
+    "audio": "voip",
+    "auto_recording": "local",
+    "enforce_login": "false"
+  }
+}
+"""
+
+# jsonをloadsしておく
+
+create_meeting_json = json.loads(create_meeting_json_template)
+
+print(json.dumps(create_meeting_json))
+
+res_add_meeting = requests.post(API_ROOT + f"/v2/users/me/meetings" ,
+                    headers=headers,
+                    data=json.dumps(create_meeting_json))
+print(res_add_meeting)
+
 added_meeting = res_add_meeting.json()
-pprint(meetings)
+pprint(added_meeting)
 
