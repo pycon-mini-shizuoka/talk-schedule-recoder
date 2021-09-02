@@ -31,35 +31,14 @@ pprint(meetings)
 # スケジュール登録
 
 # meetingの構造を作る
-
 create_meeting_json_template = """
 {
-  "topic": "wip:apitest:",
+  "topic": "wip:apitest:日本語テストです もう一つ",
   "type": "2",
-  "start_time": "2021-09-10T10:00:00Z",
-  "duration": "40",
-  "timezone": "Asia/Tokyo",
-  "agenda": "",
-  "settings": {
-    "host_video": "true",
-    "participant_video": "true",
-    "join_before_host": "true",
-    "mute_upon_entry": "boolean",
-    "watermark": "false",
-    "audio": "voip",
-    "auto_recording": "local",
-    "enforce_login": "false"
-  }
-}
-"""
-
-create_meeting_json_template = """
-{
-  "topic": "wip:apitest:日本語テストです",
-  "type": "2",
-  "start_time": "2021-09-10T10:00:00Z",
+  "start_time": "2021-09-02T13:50:00Z",
   "duration": "45",
   "timezone": "Asia/Tokyo",
+  "password": "2021091022",
   "agenda": "",
   "settings": {
     "host_video": "true",
@@ -67,8 +46,9 @@ create_meeting_json_template = """
     "join_before_host": "true",
     "watermark": "false",
     "audio": "voip",
-    "auto_recording": "local",
-    "enforce_login": "false"
+    "auto_recording": "cloud",
+    "enforce_login": "false",
+    "wating_room": "false"
   }
 }
 """
@@ -87,3 +67,19 @@ print(res_add_meeting)
 added_meeting = res_add_meeting.json()
 pprint(added_meeting)
 
+## 気になるところ
+"""
+- API操作は特に問題なし
+- ローカルレコードをしたときに、Zoomの参加者の顔が小さすぎる問題点
+- 悩ましい所だけどあきらめてもらうしかないかも...
+- 一応ほかのマシンでも試そう...
+  -> 参加者として参加するとローカル録画が自動的に動かないことがわかる💦
+  -> これだと開始タイミングでバックアップが取れないから、手動で録画してもらう必要がある（これはしょうがないかな）
+  クラウドレコーディングだとどうなるか調べてみよう -> todoに入れる
+- ミーティングひとつのみの話でもあるから、starturlを渡してしまっても良いかもしれない。ただその場合はユーザー名も全部ミーティング発行者のユーザーっぽい
+  - 主催者アドレスを使って、自動的に起動してOBSのvirtualカメラで録画用ユーザーとして自動参加させるのもひとつ
+    - 期間中 or ミーティングスケジュールにのっとって起動して、操作するRPAが必要。正直面倒
+  - レコーディングはYouTube Live側で任せちゃうのもいいかな。
+  - クラウドレコーディングだったら、参加者も録画できた。開始許諾はやる必要があるから連絡しよう。
+  
+"""
