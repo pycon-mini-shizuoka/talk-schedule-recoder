@@ -4,3 +4,5 @@ google-auth
 google-auth-httplib2
 google-api-python-client
 google-auth-oauthlib
+msgraph-core
+azure-identity
