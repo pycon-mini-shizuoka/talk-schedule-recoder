@@ -132,3 +132,4 @@ dmypy.json
 *.mp4
 client_secret.json
 token.pickle
+exam/parameters.json
