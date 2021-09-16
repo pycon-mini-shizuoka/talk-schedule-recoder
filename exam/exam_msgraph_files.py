@@ -26,12 +26,12 @@ import msal
 
 base_endpoint = "https://graph.microsoft.com/v1.0/"
 
-endpoint = base_endpoint + "me/drive/root/children"
-
 # Optional logging
 # logging.basicConfig(level=logging.DEBUG)
 
 config = json.load(open(sys.argv[1]))
+
+user_id = config["user_id"]
 
 # Create a preferably long-lived app instance which maintains a token cache.
 app = msal.ConfidentialClientApplication(
@@ -57,11 +57,42 @@ if not result:
 if "access_token" in result:
     # Calling graph using the access token
     graph_data = requests.get(  # Use token to call downstream service
-        endpoint,
+        base_endpoint + f"users/{user_id}/drive/root/children",
         headers={'Authorization': 'Bearer ' + result['access_token']}, ).json()
     print("Graph API call result: ")
+    print(json.dumps(graph_data, indent=2))
+    
+    target_dir_id = config["target_dir_id"]
+    graph_data = requests.get(  # Use token to call downstream service
+        base_endpoint + f"users/{user_id}/drive/items/{target_dir_id}/",
+        headers={'Authorization': 'Bearer ' + result['access_token']}, ).json()
+    print("Graph API call result: user_id and item id")
+    print(json.dumps(graph_data, indent=2))
+
+    
+    import urllib.parse
+    item_path = urllib.parse.quote("pycon-mini-shizuoka/talk-recoder/")
+    graph_data = requests.get(  # Use token to call downstream service
+        base_endpoint + f"users/{user_id}/drive/root:/{item_path}",
+        headers={'Authorization': 'Bearer ' + result['access_token']}, ).json()
+    print("Graph API call result: user_id + drivepath")
     print(json.dumps(graph_data, indent=2))
 else:
     print(result.get("error"))
     print(result.get("error_description"))
     print(result.get("correlation_id"))  # You may need this when reporting a bug
+
+# メモ
+"""
+- 認証方法は、クライアントシークレット経由で、APIアクセス許可はアプリケーション向けのもの。
+- 管理者がシークレットの利用を同意している状態で動く
+- user_idはparameter.jsonに入れてる。Azure Active DirectoryのユーザーにあるオブジェクトIDをツカッテル
+- この方法だと、個人のOneDriveは扱えない（endpoint/me/driveへのアクセスはクライアントシークレットでは見れないかも）
+- 特定のディレクトリを見に行くこともできる。idをitem-idとして見て詳細を見に行けばいい
+  - item-idは項目取得方法でいい。getでその項目情報が手に入るし、仮にフォルダならchildrenをそのあとにつける（パラメータ）とこの要素が見られる
+- 特定のディレクトリは、user_idが指定出来たら、ディレクトリのパスでも見に行ける
+  - パスがないなら、生成してしまっても良いと思う。
+
+- 次はファイルのアップロードにトライする
+
+"""
