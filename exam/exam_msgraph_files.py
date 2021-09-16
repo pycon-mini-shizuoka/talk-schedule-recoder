@@ -26,7 +26,7 @@ import msal
 
 base_endpoint = "https://graph.microsoft.com/v1.0/"
 
-endpoint = base_endpoint + ""
+endpoint = base_endpoint + "me/drive/root/children"
 
 # Optional logging
 # logging.basicConfig(level=logging.DEBUG)
@@ -57,7 +57,7 @@ if not result:
 if "access_token" in result:
     # Calling graph using the access token
     graph_data = requests.get(  # Use token to call downstream service
-        config["endpoint"],
+        endpoint,
         headers={'Authorization': 'Bearer ' + result['access_token']}, ).json()
     print("Graph API call result: ")
     print(json.dumps(graph_data, indent=2))
