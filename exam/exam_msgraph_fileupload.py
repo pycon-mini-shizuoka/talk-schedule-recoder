@@ -57,16 +57,26 @@ if "access_token" in result:
     folder_id = graph_data["id"]
     print(f"folder_id:{folder_id}")
 
+    # フォルダの情報が取れるかチェック
+    item_path = urllib.parse.quote("pycon-mini-shizuoka/talk-recoder/")
+    graph_data = requests.get(  # Use token to call downstream service
+        f'{base_endpoint}users/{user_id}/drive/items/{folder_id}',
+        headers={'Authorization': 'Bearer ' + result['access_token']}, ).json()
+    print("Graph API call result: user_id + folder_id")
+    print(json.dumps(graph_data, indent=2))
+
+    # exit()
+
     # ファイルのアップロード
 
     # 10MBのビデオを用意しよう
     
-    filename = "test_video.mp4"
+    filename = "test_video1.mp4"
 
     # セッション作成
     file_url = urllib.parse.quote(filename)
     result = requests.post(
-        f'{base_endpoint}users/{user_id}/tems/{folder_id}:/{file_url}:/createUploadSession',
+        f'{base_endpoint}users/{user_id}/drive/items/{folder_id}:/{file_url}:/createUploadSession',
         headers={'Authorization': 'Bearer ' + result['access_token']},
         json={
             '@microsoft.graph.conflictBehavior': 'replace',
@@ -75,17 +85,24 @@ if "access_token" in result:
             'name': filename
         }
     )
+    result.raise_for_status()
+
     upload_session = result.json()
+
     upload_url = upload_session['uploadUrl']
+    print(upload_url)
 
+    # アップロード処理
     import os
+    from pathlib import Path
 
-    st = os.stat(filename)
+    filepath = Path(__file__).absolute().parent / filename
+    st = os.stat(filepath)
     size = st.st_size
     CHUNK_SIZE = 10485760
     chunks = int(size / CHUNK_SIZE) + 1 if size % CHUNK_SIZE > 0 else 0
 
-    with open(filename, 'rb') as fd:
+    with open(filepath, 'rb') as fd:
         start = 0
         for chunk_num in range(chunks):
             chunk = fd.read(CHUNK_SIZE)
@@ -114,9 +131,14 @@ else:
 - セッション作成をして一時的に保持、そのあと
 
 - トラブってダウンロードができない場合、セッション維持方法をかんがえる必要がある
-  - 状況をファイルにダンプしておいてもいいけど、redisとかに置いておくのもいいかな。
-  - 考えるべきところは、ネットが切れる, サーバーが落ちるってところで、ネットが切れた場合はredisからセッション情報取ればいいって考え
-  - といっても、その時はアップロードスクリプトが走っているから、リトライし続けて復帰すればいい。
-  - （回数もあるし）復帰できないときはリトライ終了してセッションを保持して、ある程度タイミングを開けてから行えるようにする（これもcronかな）
+    - 状況をファイルにダンプしておいてもいいけど、redisとかに置いておくのもいいかな。
+    - 考えるべきところは、ネットが切れる, サーバーが落ちるってところで、ネットが切れた場合はredisからセッション情報取ればいいって考え
+    - といっても、その時はアップロードスクリプトが走っているから、リトライし続けて復帰すればいい。
+    - （回数もあるし）復帰できないときはリトライ終了してセッションを保持して、ある程度タイミングを開けてから行えるようにする（これもcronかな）
+- アップロードできた
+    - 数メガぐらいだとすぐにアップロードできちゃう
+    - セッションURLは実行するたびに作られるからやはり保持が必要
+    - ファイル名はセッションでファイル名を変更しても、元のファイル名だった。
+    - なので、ファイルアップロードするときはあらかじめファイル名を指定しておく必要あり
 
 """
