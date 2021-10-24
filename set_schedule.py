@@ -62,6 +62,13 @@ def get_authenticated_service():
 
 
 def main(credentials):
+
+    # TODO:2021-10-24 引数設定
+    # 時間, フォーマットは"2021-11-01 21:00"
+    # スピーカー名
+    # 
+
+
     youtube = credentials
     # ref:https://github.com/youtube/api-samples/blob/master/python/create_broadcast.py
 
@@ -146,23 +153,23 @@ def main(credentials):
     # start_timeはisoのフォーマット。utcの時間にて。tzはTimezone表現
     create_meeting_json_template = """
     {
-    "topic": "wip:apitest:ライブストリーム設定あり",
-    "type": "2",
-    "start_time": "2021-09-02T13:50:00Z",
-    "duration": "45",
-    "timezone": "Asia/Tokyo",
-    "password": "2021091022",
-    "agenda": "",
-    "settings": {
-        "host_video": "true",
-        "participant_video": "true",
-        "join_before_host": "true",
-        "watermark": "false",
-        "audio": "voip",
-        "auto_recording": "cloud",
-        "enforce_login": "false",
-        "wating_room": "false"
-    }
+        "topic": "wip:apitest:ライブストリーム設定あり",
+        "type": "2",
+        "start_time": "2021-09-02T13:50:00Z",
+        "duration": "45",
+        "timezone": "Asia/Tokyo",
+        "password": "2021091022",
+        "agenda": "",
+        "settings": {
+            "host_video": "true",
+            "participant_video": "true",
+            "join_before_host": "true",
+            "watermark": "false",
+            "audio": "voip",
+            "auto_recording": "cloud",
+            "enforce_login": "false",
+            "wating_room": "false"
+        }
     }
     """
 
@@ -178,7 +185,6 @@ def main(credentials):
         headers=headers,
         data=json.dumps(create_meeting_json),
     )
-    # print(res_add_meeting)
 
     added_meeting = res_add_meeting.json()
 
@@ -197,9 +203,9 @@ def main(credentials):
     # このどれもマスト。page_urlは適当なアドレスでよさそう
     stream_setting_json = """
     {
-    "stream_url": "rtmp://a.rtmp.youtube.com/live2",
-    "stream_key": "yt_stream_key",
-    "page_url": "https://shizuoka.pycon.jp"
+        "stream_url": "rtmp://a.rtmp.youtube.com/live2",
+        "stream_key": "yt_stream_key",
+        "page_url": "https://shizuoka.pycon.jp"
     }
     """
 
