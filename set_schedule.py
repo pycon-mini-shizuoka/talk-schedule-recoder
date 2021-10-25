@@ -7,6 +7,7 @@ import os
 import pickle
 from pathlib import Path
 from pprint import pprint
+import sys
 
 import dotenv
 import requests
@@ -19,9 +20,6 @@ from googleapiclient.errors import HttpError
 dotenv.load_dotenv()
 zoom_jwt_token = os.environ["ZOOM_JWT_TOKEN"]
 
-# 動かさない設定周り
-API_ROOT = "https://api.zoom.us/v2"
-
 headers = {
     "authorization": f"Bearer {zoom_jwt_token}",
     "content-type": "application/json",
@@ -29,14 +27,17 @@ headers = {
 
 YT_STREAM_ID = os.environ["YT_STREAM_ID"]
 
-# client_secret_file = os.environ[""]
 API_SERVICE_NAME = "youtube"
 API_VERSION = "v3"
 SCOPES = ["https://www.googleapis.com/auth/youtube"]
 CLIENT_SECRETS_FILE = Path(__file__).parent / "client_secret.json"
 
 
-def get_authenticated_service():
+def generate_zoom_endpoint(endpoint_addr):
+    return f"https://api.zoom.us/v2/{endpoint_addr}"
+
+
+def get_google_authenticated_service():
     # ref: https://developers.google.com/sheets/api/quickstart/python#step_3_set_up_the_sample, https://dev.classmethod.jp/articles/oauth2client-is-deprecated/
     creds = None
     # The file token.pickle stores the user's access and refresh tokens, and is
@@ -66,19 +67,37 @@ def main(credentials):
     # TODO:2021-10-24 引数設定
     # 時間, フォーマットは"2021-11-01 21:00"
     # スピーカー名
-    # 
-
+    args = sys.argv
+    # TODO:2021-10-25 ココ型チェックしたいな
+    option_start_datetime = sys.argv[1]
+    option_speaker_name = sys.argv[2]
 
     youtube = credentials
     # ref:https://github.com/youtube/api-samples/blob/master/python/create_broadcast.py
 
     # TODO:2021-10-24 ここは引数で登録
-    options_broadcast_title = "pyconshizu api test " + datetime.datetime.now().strftime(
-        "%Y%m%d%H%M"
+    options_broadcast_title = (
+        f"PyCon Shizu 2021 事前収録レビュー: {option_speaker_name}さん {option_start_datetime}"
     )
-    options_start_time = "2021-09-08T00:00:00.0Z"
-    options_broadcast_min = 40
+
+    option_date = option_start_datetime.split(" ")[0]
+    option_time = option_start_datetime.split(" ")[1]
+    # TODO:2021-10-25 ここZoomとYT Liveの共有できるか試すこと
+    options_start_time = f"{option_date}T{option_time}:00.0"
     options_privacy_status = "unlisted"
+
+    print("load option:")
+    print(options_broadcast_title)
+    print(options_start_time)
+
+    # タイムゾーン管理
+    # 入力した時間は日本時間なので、UTCに変換する
+    args_datetime_format = "%Y-%m-%d %H:%M"
+    fix_timezone_youtube_datetime = (
+        datetime.datetime.strptime(option_start_datetime, args_datetime_format)
+        .astimezone()
+        .isoformat()
+    )
 
     try:
         # とりあえず決め打ちでの例
@@ -99,7 +118,7 @@ def main(credentials):
                     },
                     "snippet": {
                         "title": options_broadcast_title,
-                        "scheduledStartTime": options_start_time,
+                        "scheduledStartTime": fix_timezone_youtube_datetime,
                     },
                     "status": {
                         "selfDeclaredMadeForKids": False,
@@ -120,7 +139,6 @@ def main(credentials):
                 b_snippet["publishedAt"],
             )
         )
-
         # streamをbindする
         # ストリーミングの情報はすでにあるので、それを使う
         bind_broadcast_response = (
@@ -133,19 +151,15 @@ def main(credentials):
             .execute()
         )
 
-        print(
-            "Broadcast '%s' was bound to stream '%s'."
-            % (
-                bind_broadcast_response["id"],
-                bind_broadcast_response["contentDetails"]["boundStreamId"],
-            )
-        )
+        pprint(bind_broadcast_response)
 
     except HttpError:
         import traceback
 
         traceback.print_exc()
         # TODO:2021-10-24 ここでエラーの場合は続行できないで終了
+        print("error YouTube Liveの動画URLが生成できませんでした")
+        exit()
 
     # TODO:2021-10-24 ここからzoomの処理
 
@@ -153,9 +167,9 @@ def main(credentials):
     # start_timeはisoのフォーマット。utcの時間にて。tzはTimezone表現
     create_meeting_json_template = """
     {
-        "topic": "wip:apitest:ライブストリーム設定あり",
+        "topic": "replace meeting title",
         "type": "2",
-        "start_time": "2021-09-02T13:50:00Z",
+        "start_time": "replace time",
         "duration": "45",
         "timezone": "Asia/Tokyo",
         "password": "2021091022",
@@ -166,7 +180,7 @@ def main(credentials):
             "join_before_host": "true",
             "watermark": "false",
             "audio": "voip",
-            "auto_recording": "cloud",
+            "auto_recording": "local",
             "enforce_login": "false",
             "wating_room": "false"
         }
@@ -174,14 +188,15 @@ def main(credentials):
     """
 
     # jsonをloadsしておく
-
     create_meeting_json = json.loads(create_meeting_json_template)
+    create_meeting_json["topic"] = options_broadcast_title
+    create_meeting_json["start_time"] = options_start_time
 
     print("create meeting json:")
     print(json.dumps(create_meeting_json))
 
     res_add_meeting = requests.post(
-        API_ROOT + f"/users/me/meetings",
+        generate_zoom_endpoint("users/me/meetings"),
         headers=headers,
         data=json.dumps(create_meeting_json),
     )
@@ -192,8 +207,6 @@ def main(credentials):
     pprint(added_meeting)
 
     # ライブストリーム設定
-
-    # ストリームキー設定
 
     meetingid = added_meeting["id"]
     yt_stream_key = os.environ["YT_STREAM_KEY"]
@@ -210,14 +223,13 @@ def main(credentials):
     """
 
     config_livestream_json = json.loads(stream_setting_json)
-
     config_livestream_json["stream_key"] = yt_stream_key
 
     print("config lviestream json:")
     print(json.dumps(config_livestream_json))
 
     res_config_livestream = requests.patch(
-        API_ROOT + f"/meetings/{meetingid}/livestream",
+        generate_zoom_endpoint(f"meetings/{meetingid}/livestream"),
         headers=headers,
         data=json.dumps(config_livestream_json),
     )
@@ -227,6 +239,10 @@ def main(credentials):
     print("res config lviestream ")
     pprint(config_livestream)
 
+    print("----------\nresult:\n")
+    print(f"Zoom URL:{added_meeting['join_url']}")
+    print(f"YouTube Live URL:https://youtu.be/{bind_broadcast_response['id']}")
+
 
 if __name__ == "__main__":
-    main(get_authenticated_service())
+    main(get_google_authenticated_service())
