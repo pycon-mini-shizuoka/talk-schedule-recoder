@@ -224,6 +224,9 @@ def main(credentials):
 
     config_livestream_json = json.loads(stream_setting_json)
     config_livestream_json["stream_key"] = yt_stream_key
+    config_livestream_json[
+        "page_url"
+    ] = f"https://youtu.be/{bind_broadcast_response['id']}"
 
     print("config lviestream json:")
     print(json.dumps(config_livestream_json))
