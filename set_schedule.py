@@ -242,7 +242,7 @@ def main(credentials):
     print("res config lviestream ")
     pprint(config_livestream)
 
-    print("----------\nresult:\n")
+    print("\n----------\nresult:\n")
     print(f"Zoom URL:{added_meeting['join_url']}")
     print(f"YouTube Live URL:https://youtu.be/{bind_broadcast_response['id']}")
 
