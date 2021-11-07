@@ -87,8 +87,11 @@ def main(credentials):
     options_privacy_status = "unlisted"
 
     print("load option:")
-    print(options_broadcast_title)
-    print(options_start_time)
+    print(f"start time: {options_start_time}")
+    print(f"speaker_name: {option_speaker_name}")
+
+    print("------------\nYouTube Live Title: {options_broadcast_title}")
+    print("------------")
 
     # タイムゾーン管理
     # 入力した時間は日本時間なので、UTCに変換する
@@ -151,7 +154,7 @@ def main(credentials):
             .execute()
         )
 
-        pprint(bind_broadcast_response)
+        # pprint(bind_broadcast_response)
 
     except HttpError:
         import traceback
@@ -192,8 +195,8 @@ def main(credentials):
     create_meeting_json["topic"] = options_broadcast_title
     create_meeting_json["start_time"] = options_start_time
 
-    print("create meeting json:")
-    print(json.dumps(create_meeting_json))
+    # print("create meeting json:")
+    # print(json.dumps(create_meeting_json))
 
     res_add_meeting = requests.post(
         generate_zoom_endpoint("users/me/meetings"),
@@ -203,8 +206,8 @@ def main(credentials):
 
     added_meeting = res_add_meeting.json()
 
-    print("created meeting info")
-    pprint(added_meeting)
+    # print("created meeting info")
+    # pprint(added_meeting)
 
     # ライブストリーム設定
 
@@ -228,19 +231,19 @@ def main(credentials):
         "page_url"
     ] = f"https://youtu.be/{bind_broadcast_response['id']}"
 
-    print("config lviestream json:")
-    print(json.dumps(config_livestream_json))
+    # print("config lviestream json:")
+    # print(json.dumps(config_livestream_json))
 
     res_config_livestream = requests.patch(
         generate_zoom_endpoint(f"meetings/{meetingid}/livestream"),
         headers=headers,
         data=json.dumps(config_livestream_json),
     )
-    print(res_config_livestream)
+    # print(res_config_livestream)
     config_livestream = res_config_livestream.text
 
-    print("res config lviestream ")
-    pprint(config_livestream)
+    # print("res config lviestream ")
+    # pprint(config_livestream)
 
     print("\n----------\nresult:\n")
     print(f"Zoom URL:{added_meeting['join_url']}")
