@@ -90,9 +90,6 @@ def main(credentials):
     print(f"start time: {options_start_time}")
     print(f"speaker_name: {option_speaker_name}")
 
-    print("------------\nYouTube Live Title: {options_broadcast_title}")
-    print("------------")
-
     # タイムゾーン管理
     # 入力した時間は日本時間なので、UTCに変換する
     args_datetime_format = "%Y-%m-%d %H:%M"
@@ -245,9 +242,11 @@ def main(credentials):
     # print("res config lviestream ")
     # pprint(config_livestream)
 
-    print("\n----------\nresult:\n")
+    print("----------\nresult:\n")
+    print(f"------------\nYouTube Live Title: {options_broadcast_title}")
     print(f"Zoom URL:{added_meeting['join_url']}")
     print(f"YouTube Live URL:https://youtu.be/{bind_broadcast_response['id']}")
+    print("----------\n")
 
 
 if __name__ == "__main__":
